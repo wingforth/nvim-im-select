@@ -24,7 +24,7 @@ use "wingforth/nvim-im-select"
 ## Setup
 
 The setup function accepts a dictionary that contains options as argument.  
-There are four options that can be specified:
+There are three options that can be specified:
 
 - `im_select_cmd`: the im-select command, maybe the path to the executable `im-select`.
 - `default_im`: the default input method for neovim modes other than insert mode.

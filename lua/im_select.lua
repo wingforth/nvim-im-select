@@ -83,7 +83,7 @@ local create_mode_event_autocmds = function()
 	})
 
 	-- Leave cmdline mode, swith IM to default
-	vim.api.nvim_create_autocmd({ "CmdlineLeave" }, {
+	vim.api.nvim_create_autocmd("CmdlineLeave", {
 		group = on_mode_events,
 		callback = switch_to_default,
 	})
@@ -113,7 +113,7 @@ local create_focus_event_autocmds = function()
 	vim.api.nvim_create_augroup(on_focus_events, { clear = true })
 
 	-- Nvim lost focus, switch to obtained IM if in normal mode, otherwise do nothing
-	vim.api.nvim_create_autocmd({ "FocusLost" }, {
+	vim.api.nvim_create_autocmd("FocusLost", {
 		group = on_focus_events,
 		callback = function()
 			if not_edit_mode() then
@@ -123,7 +123,7 @@ local create_focus_event_autocmds = function()
 	})
 
 	-- Nvim got focus, switch to the default IM if in normal mode, otherwise do nothing
-	vim.api.nvim_create_autocmd({ "FocusGained" }, {
+	vim.api.nvim_create_autocmd("FocusGained", {
 		group = on_focus_events,
 		callback = function()
 			if not_edit_mode() then
