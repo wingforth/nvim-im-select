@@ -10,7 +10,7 @@ The main intention is that when neovim enters normal mode, the input method will
 
 ## Requirements
 
-Using Neovim  on Windows or macOS.  
+Using Neovim on Windows or macOS.  
 [im-select](https://github.com/daipeihust/im-select) should be installed.
 
 ## Install
@@ -26,10 +26,9 @@ use "wingforth/nvim-im-select"
 The setup function accepts a dictionary that contains options as argument.  
 There are four options that can be specified:
 
-- `imselectCmd`: the im-select command, maybe the path to the executable `im-select`.
-- `defaultIM`: the default input method for neovim modes other than insert mode.
-- `modeAutoSwitch`: enable or disable switch input method automatically according to edit mode. `true` or `false`, default `true`, enabled.
-- `focusAutoSwitch`: enable or disable switch input method automatically for FocusLost and FocusGained events. `true` or `false`, default `false`, diabled.
+- `im_select_cmd`: the im-select command, maybe the path to the executable `im-select`.
+- `default_im`: the default input method for neovim modes other than insert mode.
+- `enable_on_focus_events`: enable or disable switch input method automatically on FocusLost and FocusGained events. If you have set up other ways to switch IM among different windows/applications, you may want to set this option to `false`. Default `true`.  
 
 e.g.
 
@@ -37,31 +36,37 @@ e.g.
 require("im_select").setup({
     -- im-select command, maybe the path to the executable `im-select`.
     -- default value : "im-select"
-    imselectCmd = "D:\\Tools\\im-select.exe",
+    im_select_cmd= "D:\\Tools\\im-select.exe",
     -- default input method for normal mode or others except insert.
     -- default value for macOS: "com.apple.keylayout.ABC".
     -- defalt value for Windows: "1033"
-    defaultIM = "1033",
-	-- enable or disable switch input method automatically according to edit mode.
-	modeAutoSwitch = true,
-	-- enable or disable switch input method automatically for FocusLost and FocusGained events.
-	focusAutoSwitch = false,
+    default_im = "1033",
+	-- enable or disable switch input method automatically on FocusLost and FocusGained events.
+    -- disable by setting this option to false/0, or any other to enable.
+    -- if you have set up other ways to switch IM among different windows/applications, you may want to set this option to false. 
+	-- default value is true.
+	enable_on_focus_events = true,
 })
 ```
 
-If the default values wors for you, simply setup without passing any parameters.
+If the default values works for you, simply setup without passing any parameters.
 
 ```lua
 require("im_select").setup()
 ```
 
+## Global variables
+
+A global variable is used to check whether it is enabled on FocusLost and FocusGained events:
+
+- `im_select_enable_on_focus_events`
+
 ## Commands
 
-There are two commands to turn on/off switching input method automatically:
+There is a command to turn on/off switching input method automatically on FocusLost and FocusGained events:
 
-- `:IMSelectModeToggle`: turn on/off switching input method automatically according to edit mode.
-- `:IMSelectFocusToggle`: turn on/off switching input method automatically for FocusLost and FocusGained events.
+- `:IMSelectFocusEventsToggle`
 
 ## Known issues
 
-Switching IM for FocusLost and FocusGained events, Microsoft Pinyin IM can't distinguish between Chinese and English mode.
+Switching IM on FocusLost and FocusGained events, Microsoft Pinyin IM can't distinguish between Chinese and English mode.
