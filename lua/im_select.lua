@@ -6,9 +6,9 @@ local M = {}
 -- Defalt value for Windows: "1033".
 local default_im
 local system = vim.loop.os_uname().sysname
-if system ~= "Windows_NT" then
+if system == "Windows_NT" then
 	default_im = "1033"
-elseif system ~= "Darwin" then
+elseif system == "Darwin" then
 	default_im = "com.apple.keylayout.ABC"
 else
 	-- Only works on Windows and macOS
@@ -17,13 +17,13 @@ else
 end
 
 -- Option: im_select_cmd
--- im-select command, maybe the path to the executable `im-select`.
+-- Command of im-select, leave it "im-select" if im-select is in $PAth, or set it to the path of the executable `im-select`.
 -- Default value : "im-select".
 local im_select_cmd = "im-select"
 
 -- Option: enable_on_focus_events
--- Enable or disable switch input method automatically on FocusLost and FocusGained events.
--- Disable it by setting this option to false/0, or any other value to enable it.
+-- Enable or disable switching input method automatically on FocusLost and FocusGained events.
+-- Set it to false/0 to disable it, or any other value to enable it.
 -- If you have set up other ways to switch IM among different windows/applications, you may want to set this option to false. 
 -- Default value is true.
 local enable_on_focus_events = true
@@ -76,47 +76,38 @@ local create_mode_event_autocmds = function()
 	local on_mode_events = "ImSelectOnModeEvents"
 	vim.api.nvim_create_augroup(on_mode_events, { clear = true })
 
-	-- Leave insert mode or enter Nvim, obtain current IM and swith IM to default
+	-- Leave insert mode or enter Nvim, obtain current IM and swith to default IM
 	vim.api.nvim_create_autocmd({ "InsertLeave", "VimEnter" }, {
 		group = on_mode_events,
 		callback = obtain_and_switch_to_default,
 	})
 
-	-- Leave cmdline mode, swith IM to default
+	-- Leave cmdline mode, swith to default IM
 	vim.api.nvim_create_autocmd("CmdlineLeave", {
 		group = on_mode_events,
 		callback = switch_to_default,
 	})
 
-	-- Enter insert mode or leave Nvim, swith IM back to the obtained IM before
+	-- Enter insert mode or leave Nvim, swith back to previous IM
 	vim.api.nvim_create_autocmd({ "InsertEnter", "VimLeave" }, {
 		group = on_mode_events,
 		callback = switch_to_previous,
 	})
 end
 
+-- Focus enevt autocmd group name
+local on_focus_events = "ImSelectOnFocusEvents"
 -- Create autocmds on focus enevts
 local create_focus_event_autocmds = function()
-	-- check whether in edit state
-	local not_edit_mode = function()
-		local patterns = { "^[iRsSt]", "^CTRL-S" }
-		local mode = vim.fn.mode()
-		for _, pattern in pairs(patterns) do
-			if vim.fn.match(mode, pattern) == 0 then
-				return false
-			end
-		end
-		return true
-	end
-
-	local on_focus_events = "ImSelectOnFocusEvents"
 	vim.api.nvim_create_augroup(on_focus_events, { clear = true })
 
-	-- Nvim lost focus, switch to obtained IM if in normal mode, otherwise do nothing
+	-- Nvim lost focus, switch back to the previous IM if in normal mode, otherwise do nothing
 	vim.api.nvim_create_autocmd("FocusLost", {
 		group = on_focus_events,
 		callback = function()
-			if not_edit_mode() then
+			local mode = vim.fn.mode()
+			-- Switch to previous IM if not in insert mode or replace mode
+			if mode ~= "i" and mode ~= "R" then
 				switch_to_previous_with_delay()
 			end
 		end,
@@ -126,7 +117,9 @@ local create_focus_event_autocmds = function()
 	vim.api.nvim_create_autocmd("FocusGained", {
 		group = on_focus_events,
 		callback = function()
-			if not_edit_mode() then
+			local mode = vim.fn.mode()
+			-- Switch to default IM if not in insert mode or replace mode
+			if mode ~= "i" and mode ~= "R" then
 				obtain_and_switch_to_default()
 			end
 		end,
