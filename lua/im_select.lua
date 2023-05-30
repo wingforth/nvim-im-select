@@ -6,9 +6,9 @@ local M = {}
 -- Defalt value for Windows: "1033".
 local default_im
 local system = vim.loop.os_uname().sysname
-if system == "Windows_NT" then
+if system:match("Windows") then
 	default_im = "1033"
-elseif system == "Darwin" then
+elseif system:match("Darwin") then
 	default_im = "com.apple.keylayout.ABC"
 else
 	-- Only works on Windows and macOS
