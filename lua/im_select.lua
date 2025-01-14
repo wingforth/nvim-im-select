@@ -1,9 +1,9 @@
 local M = {}
 
 -- Option: default_im
--- Default input method for normal mode other than insert mode.
+-- Default input method for Normal mode other than Insert mode.
 -- Default value for macOS: "com.apple.keylayout.ABC".
--- Defalt value for Windows: "1033".
+-- Default value for Windows: "1033".
 local default_im
 local os_name = vim.uv.os_uname().sysname
 if os_name:match("Windows") then
@@ -22,9 +22,9 @@ end
 local im_select_cmd = "im-select"
 
 -- Option: insert_im
--- The input method specified for Insert, Replace and Select mode. 
--- If it is set, always switch to it when entering Insert, Replace and Select mode.
--- If it is not set, the insert mode IM will be auto obtained and saved IM when leaving Insert, Replace and Select mode.
+-- The input method specified for Insert and Replace mode. 
+-- If user sets option `insert_im`, always switch to it when entering Insert and Replace mode.
+-- If user doesn't set option `insert_im`, the Insert mode IM will be auto obtained and saved when leaving Insert and Replace mode.
 -- Default value: nil.
 local insert_im = nil
 
@@ -39,11 +39,60 @@ local enable_im_select = true
 -- Set it to false/0 to disable it, or any other value to enable it.
 -- If you have set to switch IM among different windows/applications by other ways, you should set it to false. 
 -- Note that the IM of external applications is the same as the IM of Insert mode.
--- Default value is false.
+-- Default value: false.
 local enable_on_focus_events = false
 
--- Previous IM that saved for Insert mode.
-local previous_im
+-- Callback functions of autocmds.
+local switch_to_default_im, switch_to_insert_im, obtain_and_switch_to_default_im
+
+local vim_fn_system, vim_system, vim_fn_mode = vim.fn.system, vim.system, vim.fn.mode
+
+-- Define functions for autocmds.
+local define_autocmd_functions = function(specified_insert_im)
+    -- Switch to default IM.
+    switch_to_default_im = (function()
+        if specified_insert_im then
+            return function()
+                vim_system({im_select_cmd, default_im})
+            end
+        else
+            return function()
+                if default_im ~= insert_im then
+                    vim_system({im_select_cmd, default_im})
+                end
+            end
+        end
+    end)()
+
+    -- Switch to Insert mode IM.
+    switch_to_insert_im = (function()
+        if specified_insert_im then
+            return function()
+                vim_system({im_select_cmd, insert_im})
+            end
+        else
+            return function()
+                if default_im ~= insert_im then
+                    vim_system({im_select_cmd, insert_im})
+                end
+            end
+        end
+    end)()
+
+    -- Obtain current IM and switch to default IM.
+    -- If insert_im is set, no need to obtain current IM, only need to switch to default IM.
+    obtain_and_switch_to_default_im = (function()
+        if specified_insert_im then
+            return switch_to_default_im
+        else
+            -- Command of obtaining current IM and switching to default IM.
+            local obtain_and_switch_command = im_select_cmd .. " & " .. im_select_cmd .. " " .. default_im
+            return function()
+                insert_im = vim_fn_system(obtain_and_switch_command):sub(1, -2)
+            end
+        end
+    end)()
+end
 
 -- Update configuration
 M.config = function(opts)
@@ -63,78 +112,37 @@ M.config = function(opts)
         if opts.enable_on_focus_events and opts.enable_on_focus_events ~= 0 then
             enable_on_focus_events = true
         end
+        define_autocmd_functions(opts.insert_im)
+    else
+        define_autocmd_functions(nil)
     end
 end
 
--- Callback fuctions of autocmds.
-local switch_to_default, switch_to_previous, obtain_and_switch_to_default
-
--- Obtain and switch to default IM command.
-local obtain_and_switch_command
-
-local vim_fn_system, vim_system, vim_fn_mode = vim.fn.system, vim.system, vim.fn.mode
-
--- Define functions for autocmds.
-local define_autocmd_functions = function()
-    -- Switch to default IM
-    switch_to_default = function()
-        vim_system({im_select_cmd, default_im})
-    end
-
-    -- Switch to previous IM that obtained before.
-    -- If insert_im is set, switch to insert IM.
-    switch_to_previous = (function(specified_insert_im)
-        if specified_insert_im then
-            return function()
-                vim_system({im_select_cmd, specified_insert_im})
-            end
-        else
-            return function()
-                vim_system({im_select_cmd, previous_im})
-            end
-        end
-    end)(insert_im)
-
-    -- Command of obtaining current IM and switching to default IM.
-    obtain_and_switch_command = im_select_cmd .. " & " .. im_select_cmd .. " " .. default_im
-
-    -- Obtain current IM and switch to default IM.
-    -- If insert_im is set, no need to obtain current IM, only switch to default IM.
-    obtain_and_switch_to_default = (function(specified_insert_im)
-        if specified_insert_im then
-            return switch_to_default
-        else
-            return function()
-                previous_im = vim_fn_system(obtain_and_switch_command):sub(1, -2)
-            end
-        end
-    end)(insert_im)
-end
 -- Auto switch IM autocommand group name.
 local IM_SELECT_AUGROUP = "ImSelectAugroup"
 
--- Create autocmds on focus enevts
+-- Create autocmds on focus events.
 local create_focus_event_autocmds = function()
-    -- Nvim lost focus, switch back to the previous IM if in normal mode, otherwise do nothing.
+    -- Neovim lost focus, switch back to the Insert mode IM if in Normal mode, otherwise do nothing.
     vim.api.nvim_create_autocmd("FocusLost", {
         group = IM_SELECT_AUGROUP,
         callback = function()
             local mode = vim_fn_mode()
-            -- Switch to previous IM if not in insert mode or replace mode
+            -- Switch to Insert mode IM if not in Insert mode or Replace mode
             if mode ~= "i" and mode ~= "R" then
-                switch_to_previous()
+                switch_to_insert_im()
             end
         end
     })
 
-    -- Nvim got focus, switch to the default IM if in normal mode, otherwise do nothing.
+    -- Neovim got focus, switch to the default IM if in Normal mode, otherwise do nothing.
     vim.api.nvim_create_autocmd("FocusGained", {
         group = IM_SELECT_AUGROUP,
         callback = function()
             local mode = vim_fn_mode()
-            -- Switch to default IM if not in insert mode or replace mode.
+            -- Switch to default IM if not in Insert mode or Replace mode.
             if mode ~= "i" and mode ~= "R" then
-                obtain_and_switch_to_default()
+                obtain_and_switch_to_default_im()
             end
         end
     })
@@ -146,22 +154,22 @@ local create_im_select_autocmds = function()
         clear = true
     })
 
-    -- Enter insert mode or leave Nvim, switch back to previous IM.
+    -- Enter Insert mode or leave Neovim, switch back to Insert mode IM.
     vim.api.nvim_create_autocmd({"InsertEnter", "VimLeave"}, {
         group = IM_SELECT_AUGROUP,
-        callback = switch_to_previous
+        callback = switch_to_insert_im
     })
 
-    -- Leave insert mode or enter Nvim, obtain current IM and switch to default IM.
+    -- Leave Insert mode or enter Neovim, obtain current IM and switch to default IM.
     vim.api.nvim_create_autocmd("InsertLeave", {
         group = IM_SELECT_AUGROUP,
-        callback = obtain_and_switch_to_default
+        callback = obtain_and_switch_to_default_im
     })
 
-    -- Leave cmdline mode, switch to default IM.
+    -- Leave Cmdline mode, switch to default IM.
     vim.api.nvim_create_autocmd("CmdlineLeave", {
         group = IM_SELECT_AUGROUP,
-        callback = switch_to_default
+        callback = switch_to_default_im
     })
 
     if enable_on_focus_events then
@@ -169,9 +177,9 @@ local create_im_select_autocmds = function()
     end
 end
 
--- Creat commands for user.
+-- Create commands for user.
 local create_user_commands = function()
-    -- Command to enable/disabled pulgin neovim-im-select.
+    -- Command to enable/disable plugin neovim-im-select.
     vim.api.nvim_create_user_command("ImSelectToggle", function()
         if enable_im_select then
             vim.notify("Disable Neovim-im-select.", vim.log.levels.INFO)
@@ -187,7 +195,7 @@ local create_user_commands = function()
     -- Command to turn on/off switching input method automatically on FocusLost and FocusGained events.
     vim.api.nvim_create_user_command("ImSelectFocusEventToggle", function()
         if not enable_im_select then
-            vim.notify("Neovim-im-select has been disenabled. Enable it by using command `ImSelectToggle` first.",
+            vim.notify("Neovim-im-select has been disabled. Enable it by using command `ImSelectToggle` first.",
                 vim.log.levels.WARN)
             return
         end
@@ -215,11 +223,9 @@ M.setup = function(opts)
         return
     end
 
-    define_autocmd_functions()
-
-    -- Swicth to default IM when starting Nvim.
+    -- Switch to default IM when starting Neovim.
     vim.api.nvim_create_autocmd("VimEnter", {
-        callback = obtain_and_switch_to_default,
+        callback = obtain_and_switch_to_default_im,
         once = true
     })
 

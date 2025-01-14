@@ -1,29 +1,55 @@
 # nvim-im-select
 
-Switch Input Method automatically according to Neovim mode, Nevim lost or got focus, and exiting Neovim.  
-The main intention is that when neovim enters Normal, Visual, Cmdline and Ex modea, the input method will always switch to the English IM (the default IM we set). When Neovim enters Insert and Replace mode, or Neovim lost focus, the input method will switch back to the previous state that saved when leaving these modes last time.
+Some Neovim users may require different input methods when Neovim is in different modes. Such as users from some Asian countries, they want the input method to switch to the English language IM when neovim enters Normal, Visual, Cmdline or Ex mode, and switch back to the local language IM When Neovim enters Insert or Replace mode.
 
-- When entering Neovim or leaving insert mode, reserve current IM, and switch to default IM.
-- when exiting Neovim or Entering insert mode, switch to the previous IM.
-- When Neovim lost focus and Neovim is in normal mode, switch to the previous IM.
-- when Neovim got focus and Neovim is in normal mode, switch to default IM.
+The main intention of this plugin is to automatically switch the input method when neovim mode changed, Neovim lost or got focus, entering and leaving Neovim. The IM in normal mode called `default IM`, auto switch to it when entering Normal, Cmdline or Ex mode. The IM in insert mode called `insert IM`, auto switch to it when entering Insert and Replace mode.
+
+- When entering Neovim and leaving Insert or Replace mode, obtain and save current IM as `insert IM`, then switch to `default IM`.
+- when exiting Neovim and Entering Insert or Replace mode, switch to the `insert IM`.
+- When Neovim is in normal mode and lost focus, switch to the `insert IM`.
+- when Neovim is in normal mode and got focus, switch to `default IM`.
 
 ## Requirements
 
-Using Neovim on Windows or macOS.  
-[im-select](https://github.com/daipeihust/im-select) should be installed.
+1. Using Neovim on Windows or macOS platform.  
+2. [im-select](https://github.com/daipeihust/im-select) should be installed.
 
-## Install
+## Installation and Setup
 
-Install with [packer](https://github.com/wbthomason/packer.nvim):
+Install plugin with your preferred plugin manager.
+
+- [packer.nvim](https://github.com/wbthomason/packer.nvim):
 
 ```lua
-use "wingforth/nvim-im-select"
+use {
+    "wingforth/nvim-im-select",
+    config = function() 
+        require("im_select").setup{ 
+            -- Your configuration 
+        } 
+    end
+}
 ```
 
-## Setup
+- [lazy.nvim](https://github.com/folke/lazy.nvim):
 
-The setup function accepts a dictionary that contains options as argument.  
+```lua
+{
+    "wingforth/nvim-im-select",
+    lazy = false,
+    priority = 1000,
+    config = function() 
+        require("im_select").setup {
+            -- Your configuration
+        }
+    end
+}
+```
+
+## Configuration
+
+You can customize the configuration when calling `setup()` function.
+The `setup()` function accepts a dictionary that contains options as argument.  
 There are five options that can be specified:
 
 1. `im_select_cmd`: the `im-select` command, the path to the executable `im-select`.
@@ -44,7 +70,7 @@ require("im_select").setup({
     -- Option: [string] default_im
     -- Default input method for normal mode or others except Insert and Replace.
     -- Default value for macOS: "com.apple.keylayout.ABC".
-    -- Defalt value for Windows: "1033"
+    -- Default value for Windows: "1033"
     default_im = "1033",
 
     -- Option: [string] insert_im
@@ -70,7 +96,7 @@ require("im_select").setup({
 })
 ```
 
-If the default values works for you, simply setup without passing any parameters.
+If the default values works for you, just simply setup without passing any parameters.
 
 ```lua
 require("im_select").setup()
@@ -81,7 +107,7 @@ require("im_select").setup()
 There are two commands:
 
 1. `:ImSelectToggle`  
-    Command `ImSelectToggle` is used to enable/disabled pulgin neovim-im-select.
+    Command `ImSelectToggle` is used to enable/disabled plugin neovim-im-select.
 2. `:ImSelectFocusEventToggle`  
     Command `ImSelectFocusEventToggle` is used to turn on/off switching input method automatically on FocusLost and FocusGained events.
 
