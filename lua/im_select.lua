@@ -1,5 +1,7 @@
 local M = {}
 
+-- ===Start of options=== --
+
 -- Option: default_im
 -- Default input method for Normal mode other than Insert mode.
 -- Default value for macOS: "com.apple.keylayout.ABC".
@@ -41,6 +43,8 @@ local enable_im_select = true
 -- Note that the IM of external applications is the same as the IM of Insert mode.
 -- Default value: false.
 local enable_on_focus_events = false
+
+-- ===End of options=== --
 
 -- Callback functions of autocmds.
 local switch_to_default_im, switch_to_insert_im, obtain_and_switch_to_default_im
@@ -107,7 +111,7 @@ M.config = function(opts)
             insert_im = opts.insert_im
         end
         if opts.enable_im_select == false or opts.enable_im_select == 0 then
-            enable_on_focus_events = false
+            enable_im_select = false
         end
         if opts.enable_on_focus_events and opts.enable_on_focus_events ~= 0 then
             enable_on_focus_events = true
