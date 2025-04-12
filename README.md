@@ -1,11 +1,15 @@
 # nvim-im-select
 
-Some Neovim users may require different input methods when Neovim is in different modes. Such as users from some Asian countries, they want the input method to switch to the English language IM when neovim enters Normal, Visual, Cmdline or Ex mode, and switch back to the local language IM When Neovim enters Insert or Replace mode.
+Nvim-im-select is an auto-switch input method plugin.
 
-The main intention of this plugin is to automatically switch the input method when neovim mode changed, Neovim lost or got focus, entering and leaving Neovim. The IM in normal mode called `default IM`, auto switch to it when entering Normal, Cmdline or Ex mode. The IM in insert mode called `insert IM`, auto switch to it when entering Insert and Replace mode.
+Some Neovim users may require different input methods when Neovim is in different modes. Such as users from some Asian countries, they want the input method to switch to the English language IM when neovim enters Normal mode, and switch back to the local language IM When Neovim enters Insert or Replace mode.
+
+The main intention of this plugin is to automatically switch the input method when neovim mode changed, Neovim lost or got focus, entering and leaving Neovim. The IM in normal mode called `default IM`, auto switch to it when entering Normal mode. The IM in insert mode called `insert IM`, auto switch to it when entering Insert or Replace mode.
 
 - When entering Neovim and leaving Insert or Replace mode, obtain and save current IM as `insert IM`, then switch to `default IM`.
 - when exiting Neovim and Entering Insert or Replace mode, switch to the `insert IM`.
+- when entering search ( "/" and "?" ) Cmdline mode, switch to the `insert IM`.
+- when leaving search ( "/" and "?" ) Cmdline mode, switch to the `default IM`.
 - When Neovim is in normal mode and lost focus, switch to the `insert IM`.
 - when Neovim is in normal mode and got focus, switch to `default IM`.
 
@@ -24,7 +28,7 @@ Install plugin with your preferred plugin manager.
 use {
     "wingforth/nvim-im-select",
     config = function() 
-        require("im_select").setup{ 
+        require("nvim-im-select").setup{ 
             -- Your configuration 
         } 
     end
@@ -39,9 +43,9 @@ use {
     lazy = false,
     priority = 1000,
     config = function() 
-        require("im_select").setup {
-            -- Your configuration
-        }
+        require("nvim-im-select").setup{ 
+            -- Your configuration 
+        } 
     end
 }
 ```
@@ -58,10 +62,10 @@ There are five options that can be specified:
 4. `enable_im_select`: enable or disable plugin neovim-im-select.
 5. `enable_on_focus_events`: enable or disable switch input method automatically on FocusLost and FocusGained events. If you have set to switch IM among different windows/applications by other ways, you should set it to `false`. Default `false`.  
 
-e.g.
+Default configuration:
 
 ```lua
-require("im_select").setup({
+{
     -- Option: [string] im_select_cmd
     -- Command of `im-select`, the path to the executable `im-select`.
     -- Default value : "im-select"
@@ -82,24 +86,24 @@ require("im_select").setup({
 
     -- Option: [boolean] enable_im_select
     -- Whether enable switching input method automatically.
-    -- Set it to false/0 to disable it, or any other value to enable it.
+    -- Set it to `false` to disable it, or `true` to enable it.
     -- Default value: true.
     enable_im_select = true,
 
     -- Option: [boolean] enable_on_focus_events
-    -- enable or disable switch input method automatically on FocusLost and FocusGained events.
-    -- disable by setting this option to false/0, or any other to enable.
+    -- Whether enable switching input method automatically on FocusLost and FocusGained events.
+    -- Set it to `false` to disable it, or `true` to enable it.
     -- If you have set to switch IM among different windows/applications by other ways, you should set it to false. 
     -- Note that the IM of external applications is the same as the IM of Insert mode.
     -- Default value: false.
     enable_on_focus_events = false,
-})
+}
 ```
 
-If the default values works for you, just simply setup without passing any parameters.
+If the default configuration works for you, call `setup` without passing any parameters.
 
 ```lua
-require("im_select").setup()
+require("nvim-im-select").setup()
 ```
 
 ## Commands
