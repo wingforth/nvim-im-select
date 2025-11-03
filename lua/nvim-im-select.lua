@@ -219,12 +219,12 @@ M.setup = function(opts)
         return
     end
     define_switch_functions(opts.insert_im ~= nil)
-    -- Init insert mode IM and switch to default IM.
-    obtain_and_switch_to_default_im()
-    create_user_commands()
     if enable_im_select then
+        -- Init insert mode IM and switch to default IM when launching neovim.
+        obtain_and_switch_to_default_im()
         create_im_select_autocmds()
     end
+    create_user_commands()
 end
 
 return M
